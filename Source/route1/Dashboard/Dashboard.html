@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WaterWatch Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Telegraf&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Dancing+Script:wght@400..700&family=Pacifico&display=swap" rel="stylesheet">
+    <style>
+        /* Custom Cursor */
+        /* .cursor {
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            mix-blend-mode: difference;
+            transform: translate(-50%, -50%);
+        }
+
+        .cursor-follower {
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translate(-50%, -50%);
+        } */
+
+        body {
+            font-family: 'Telegraf', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #7af17a;
+            color: black;
+            transition: background 0.5s, color 0.5s;
+            /* cursor: none; */
+        }
+
+        .dark-theme {
+            background: #1B263B;
+            color: white;
+        }
+
+        .header {
+            font-size: 100px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            transition: transform 0.3s ease-in-out;
+            font-family: "Bebas Neue", serif;
+        }
+
+        .header:hover {
+            transform: scale(1.1);
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+
+        .gauge-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 60px;
+            width: 100%;
+            max-width: 800px;
+            position: relative;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .gauge-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            flex: none;
+            min-width: 200px;
+            position: relative;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .gauge-box:hover {
+            transform: translateY(-5px);
+        }
+
+        .gauge {
+            width: 400px;
+            height: 200px;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .gauge-label {
+            font-size: 60px;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: all 0.3s ease-in-out;
+            font-family: "Dancing Script", serif;
+        }
+
+        .percentage {
+            position: absolute;
+            font-size: 1.5rem;
+            font-weight: bold;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease-in-out;
+        }
+
+        .toggle-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 18px;
+            border: none;
+            cursor: none;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 20px;
+            background: white;
+            color: #0078D7;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+            transition: all 0.3s;
+        }
+
+        .toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .status {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            padding: 10px 25px;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .status::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .status:hover::before {
+            left: 100%;
+        }
+
+        .status.offline {
+            color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid rgba(255, 68, 68, 0.3);
+            text-shadow: 0 0 10px rgba(255, 68, 68, 0.3);
+        }
+
+        .status.online {
+            color: #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .status:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .status.offline:hover {
+            background: rgba(255, 68, 68, 0.15);
+        }
+
+        .status.online:hover {
+            background: rgba(0, 255, 0, 0.15);
+        }
+    </style>
+</head>
+<body>
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+    <button class="toggle-btn" onclick="toggleTheme()">Toggle Dark Mode</button>
+    
+    <div class="header">Dashboard</div>
+    <div id="status" class="status">Offline</div>
+
+    <div class="gauge-container">
+        <div class="gauge-box">
+            <canvas id="waterFlowGauge" class="gauge"></canvas>
+            <div class="percentage" id="waterFlowValue">0 L/min</div>
+            <div class="gauge-label">Water Flow</div>
+        </div>
+        <div class="gauge-box">
+            <canvas id="turbidityGauge" class="gauge"></canvas>
+            <div class="percentage" id="turbidityValue">0 NTU</div>
+            <div class="gauge-label">Turbidity</div>
+        </div>
+        <div class="gauge-box">
+            <canvas id="tdsGauge" class="gauge"></canvas>
+            <div class="percentage" id="tdsValue">0 ppm</div>
+            <div class="gauge-label">TDS</div>
+        </div>
+    </div>
+
+    <script>
+        // Custom Cursor
+        const cursor = document.querySelector('.cursor');
+        const cursorFollower = document.querySelector('.cursor-follower');
+        let mouseX = 0, mouseY = 0;
+        let cursorX = 0, cursorY = 0;
+        let followerX = 0, followerY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        function animateCursor() {
+            // Smooth cursor movement
+            cursorX += (mouseX - cursorX) * 0.2;
+            cursorY += (mouseY - cursorY) * 0.2;
+            cursor.style.left = cursorX + 'px';
+            cursor.style.top = cursorY + 'px';
+
+            // Smooth follower movement
+            followerX += (cursorX - followerX) * 0.1;
+            followerY += (cursorY - followerY) * 0.1;
+            cursorFollower.style.left = followerX + 'px';
+            cursorFollower.style.top = followerY + 'px';
+
+            requestAnimationFrame(animateCursor);
+        }
+
+        animateCursor();
+
+        // Enhanced hover effect for cursor
+        document.querySelectorAll('button, canvas, .gauge-box').forEach(element => {
+            element.addEventListener('mouseenter', () => {
+                cursor.style.transform = 'translate(-50%, -50%) scale(1.5)';
+                cursorFollower.style.transform = 'translate(-50%, -50%) scale(1.5)';
+            });
+            
+            element.addEventListener('mouseleave', () => {
+                cursor.style.transform = 'translate(-50%, -50%) scale(1)';
+                cursorFollower.style.transform = 'translate(-50%, -50%) scale(1)';
+            });
+        });
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+        }
+
+        // Check for saved theme preference
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+
+        const authToken = "MJMHCa2DZVF3HGwTjfB4-iMvp7VwGfhF";
+
+        async function checkConnection() {
+            try {
+                const response = await fetch(`https://ny3.blynk.cloud/external/api/isHardwareConnected?token=${authToken}`);
+                const isOnline = await response.json();
+
+                const statusElement = document.getElementById('status');
+                if (isOnline) {
+                    statusElement.textContent = 'Online';
+                    statusElement.classList.add('online');
+                    statusElement.classList.remove('offline');
+                } else {
+                    statusElement.textContent = 'Offline';
+                    statusElement.classList.add('offline');
+                    statusElement.classList.remove('online');
+                }
+            } catch (error) {
+                console.error('Error checking device status:', error);
+                document.getElementById('status').textContent = 'Offline';
+            }
+        }
+
+        async function fetchSensorData(pin) {
+            try {
+                const response = await fetch(`https://ny3.blynk.cloud/external/api/get?token=${authToken}&pin=${pin}`);
+                const value = await response.json();
+                return value !== null && typeof value === 'number' ? value : 0;
+            } catch (error) {
+                console.error(`Error fetching data for ${pin}:`, error);
+                return 0;
+            }
+        }
+
+        function createGauge(canvasId, maxValue = 10) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            return new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [0, maxValue],
+                        backgroundColor: ['#32CD32', '#FFFFFF'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    rotation: -90,
+                    circumference: 180,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    }
+                }
+            });
+        }
+
+        function getColor(value, maxValue) {
+            const ratio = value / maxValue;
+            const red = Math.min(255, Math.floor(255 * ratio));
+            const green = Math.max(0, Math.floor(255 * (1 - ratio)));
+            return `rgb(${red}, ${green}, 0)`;
+        }
+
+        async function updateGauges(waterFlowGauge, turbidityGauge, tdsGauge) {
+            const waterFlowValue = await fetchSensorData('V0');
+            const turbidityValue = await fetchSensorData('V1');
+            const tdsValue = await fetchSensorData('V2');
+
+            const maxValue = 10;
+
+            waterFlowGauge.data.datasets[0].data = [waterFlowValue, 5 - waterFlowValue];
+            turbidityGauge.data.datasets[0].data = [turbidityValue, 5 - turbidityValue];
+            tdsGauge.data.datasets[0].data = [tdsValue, 10 - tdsValue];
+
+            document.getElementById('waterFlowValue').textContent = `${waterFlowValue} L/min`;
+            document.getElementById('turbidityValue').textContent = `${turbidityValue} NTU`;
+            document.getElementById('tdsValue').textContent = `${tdsValue} ppm`;
+
+            waterFlowGauge.data.datasets[0].backgroundColor[0] = getColor(waterFlowValue, maxValue);
+            turbidityGauge.data.datasets[0].backgroundColor[0] = getColor(turbidityValue, maxValue);
+            tdsGauge.data.datasets[0].backgroundColor[0] = getColor(tdsValue, maxValue);
+
+            waterFlowGauge.update();
+            turbidityGauge.update();
+            tdsGauge.update();
+        }
+
+        const waterFlowGauge = createGauge('waterFlowGauge');
+        const turbidityGauge = createGauge('turbidityGauge');
+        const tdsGauge = createGauge('tdsGauge');
+
+        async function fetchData() {
+            await checkConnection();
+            await updateGauges(waterFlowGauge, turbidityGauge, tdsGauge);
+        }
+
+        setInterval(fetchData, 100);
+        fetchData();
+    </script>
+</body>
+</html>
